@@ -1,0 +1,43 @@
+﻿body { 
+    margin: 0; 
+    background: #000; 
+    color: #0f0; 
+    font-family: monospace; 
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+#ui { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+    z-index: 100; 
+    border: 1px solid #0f0; 
+    padding: 10px; 
+    background: rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+}
+
+/* Camada 1: Câmera no fundo */
+#webcam {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: 1;
+    transform: scaleX(-1); /* Modo espelho */
+}
+
+/* Camada 10: 3D transparente na frente */
+#canvas-ar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+    background: transparent !important;
+}

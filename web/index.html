@@ -1,0 +1,20 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DryFour AR</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="ui">DRYFOUR AR | STATUS: <span id="status">OFFLINE</span></div>
+    
+    <video id="webcam" autoplay playsinline></video>
+    
+    <canvas id="canvas-ar"></canvas>
+
+    <script src="wasm_exec.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
