@@ -1,0 +1,15 @@
+﻿# Binários e Executáveis
+*.exe
+*.exe~
+*.wasm
+servidor.exe
+
+# Pastas de Ferramentas e Cache
+.vercel/
+node_modules/
+dist/
+
+# Logs e arquivos temporários
+*.log
+.DS_Store
+Thumbs.db
