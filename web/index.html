@@ -2,19 +2,17 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DryFour AR</title>
+    <title>DryFour AR | Sistema Ativo</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="ui">DRYFOUR AR | STATUS: <span id="status">OFFLINE</span></div>
-    
-    <video id="webcam" autoplay playsinline></video>
-    
+    <div id="ui">DRYFOUR AR | STATUS: <span id="status">INICIALIZANDO...</span></div>
+    <video id="webcam" autoplay playsinline muted></video>
     <canvas id="canvas-ar"></canvas>
 
     <script src="wasm_exec.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="js/three.min.js"></script>
+    <script src="js/GLTFLoader.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
