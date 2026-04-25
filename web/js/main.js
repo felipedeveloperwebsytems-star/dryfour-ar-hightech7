@@ -17,7 +17,7 @@ async function init() {
         statusEl.innerText = "ERRO CÂMERA: " + err.name;
     }
 
-    // 2. Configuração Three.js
+    // 2. Configuração Three.js (Otimizada para Cores e Performance)
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     
@@ -28,22 +28,45 @@ async function init() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
+    
+    // CORREÇÃO DE COR: Essencial para texturas GLB aparecerem corretamente
+    renderer.outputEncoding = THREE.sRGBEncoding;
 
-    scene.add(new THREE.AmbientLight(0xffffff, 2));
+    // ILUMINAÇÃO REFORÇADA: Para evitar que o objeto fique preto
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5); // Luz geral forte
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 2); // Luz de brilho (reflexo)
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
     camera.position.z = 5;
 
-    // 3. CARREGAMENTO DO MODELO GLB (Correção do Erro SyntaxError)
+    // 3. CARREGAMENTO DO MODELO GLB com Correção de Material
     const loader = new THREE.GLTFLoader();
-    // O caminho deve ser relativo ao index.html
     loader.load('assets/models/bola.glb', function (gltf) {
         model = gltf.scene;
+
+        // Script de Aperfeiçoamento de Material (Caso a textura falhe ou fique escura)
+        model.traverse(function (child) {
+            if (child.isMesh) {
+                // Se o objeto estiver muito escuro, garantimos um vermelho natalino metálico
+                if (child.material) {
+                    child.material.metalness = 0.7; // Brilho metálico
+                    child.material.roughness = 0.2; // Superfície lisa/polida
+                    
+                    // Se você quiser forçar a cor vermelha da DryFour:
+                    // child.material.color.set(0xff0000); 
+                }
+            }
+        });
+
         model.scale.set(1.5, 1.5, 1.5);
         scene.add(model);
         statusEl.innerText = "BOLA CARREGADA";
-        console.log("Sucesso: Modelo GLB carregado na cena.");
+        console.log("Sucesso: Modelo GLB com materiais otimizados.");
     }, undefined, function (error) {
         console.error("Erro detalhado no GLB:", error);
-        // Fallback: Se o GLB falhar, mantém o cubo para o sistema não parar
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshNormalMaterial();
         model = new THREE.Mesh(geometry, material);
