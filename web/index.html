@@ -2,11 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DryFour AR | Sistema Ativo</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="ui">DRYFOUR AR | STATUS: <span id="status">INICIALIZANDO...</span></div>
+
+    <div id="controls-container">
+        <div class="control-group">
+            <button onmousedown="move('z', 0.5)" ontouchstart="move('z', 0.5)">Z+</button>
+            <button onmousedown="move('z', -0.5)" ontouchstart="move('z', -0.5)">Z-</button>
+        </div>
+        <div class="control-group">
+            <button onmousedown="move('x', -0.5)" ontouchstart="move('x', -0.5)">X-</button>
+            <button onmousedown="move('x', 0.5)" ontouchstart="move('x', 0.5)">X+</button>
+        </div>
+        <div class="control-group">
+            <button onmousedown="move('y', 0.5)" ontouchstart="move('y', 0.5)">Y+</button>
+            <button onmousedown="move('y', -0.5)" ontouchstart="move('y', -0.5)">Y-</button>
+        </div>
+        <div class="control-group">
+            <button onmousedown="updateScale(1.1)" ontouchstart="updateScale(1.1)">SCL+</button>
+            <button onmousedown="updateScale(0.9)" ontouchstart="updateScale(0.9)">SCL-</button>
+        </div>
+        <div class="control-group">
+            <button onmousedown="rotate('y', 0.5)" ontouchstart="rotate('y', 0.5)">ROT</button>
+        </div>
+    </div>
+
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="canvas-ar"></canvas>
 
