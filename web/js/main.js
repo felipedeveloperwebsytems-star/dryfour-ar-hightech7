@@ -1,51 +1,73 @@
 ﻿let scene, camera, renderer, model, video;
 let pigoInitialized = false;
-let currentFacingMode = "user"; // "user" = frontal, "environment" = traseira
+let currentFacingMode = "user";
 
-// Funções Globais de Controle
+// Funções de Controle Global
 window.move = (axis, val) => { if(model) model.position[axis] += val; };
 window.updateScale = (val) => { if(model) model.scale.multiplyScalar(val); };
 window.rotate = (axis, val) => { if(model) model.rotation[axis] += val; };
 
-// FUNÇÃO DE TROCA DE CÂMERA (Exclusiva Mobile)
+// --- CORREÇÃO DE CÂMERA (NotReadableError) ---
 window.toggleCamera = async () => {
     currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
     const btn = document.getElementById('btn-camera');
     btn.innerText = (currentFacingMode === "user") ? "BACK" : "FRONT";
     
-    // Ajuste de espelhamento: Câmera frontal costuma ser espelhada, a traseira não.
-    video.style.transform = (currentFacingMode === "user") ? "scaleX(-1)" : "scaleX(1)";
-    
-    await startVideo();
+    // 1. Para tudo e limpa o cache do hardware
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+
+    // 2. Aguarda 300ms para o S21 liberar o sensor fisicamente
+    setTimeout(async () => {
+        await startVideo();
+        video.style.transform = (currentFacingMode === "user") ? "scaleX(-1)" : "scaleX(1)";
+    }, 300);
 };
 
 async function startVideo() {
     try {
-        // Se já houver um stream rodando, paramos ele para liberar o hardware
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-        }
-
         const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: { ideal: 640 }, 
-                height: { ideal: 480 }, 
-                facingMode: currentFacingMode 
-            },
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: currentFacingMode },
             audio: false 
         });
         video.srcObject = stream;
-        video.onloadedmetadata = () => video.play();
+        await video.play();
     } catch (err) {
         document.getElementById('status').innerText = "ERRO CÂMERA: " + err.name;
     }
+}
+
+// --- REINTEGRAÇÃO TOUCH SCREEN (S21) ---
+function setupTouchEvents() {
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
+    canvas = document.getElementById('canvas-ar');
+    canvas.addEventListener('touchstart', e => {
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', e => {
+        if (!model) return;
+        let deltaX = e.touches[0].clientX - lastTouchX;
+        let deltaY = e.touches[0].clientY - lastTouchY;
+
+        model.rotation.y += deltaX * 0.01;
+        model.position.y -= deltaY * 0.01;
+
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+        e.preventDefault();
+    }, {passive: false});
 }
 
 async function init() {
     video = document.getElementById('webcam');
     await startVideo();
 
-    // Configuração Three.js
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-ar'), alpha: true, antialias: false });
@@ -59,8 +81,7 @@ async function init() {
 
     camera.position.z = 5;
 
-    // Carregamento do Modelo
-    new THREE.GLTFLoader().load('assets/models/bola.glb', function (gltf) {
+    new THREE.GLTFLoader().load('assets/models/bola.glb', gltf => {
         model = gltf.scene;
         model.traverse(child => { if (child.isMesh) { child.material.metalness = 0.7; child.material.roughness = 0.2; } });
         model.scale.set(1.5, 1.5, 1.5);
@@ -68,7 +89,6 @@ async function init() {
         document.getElementById('status').innerText = "BOLA CARREGADA";
     });
 
-    // WebAssembly
     const go = new Go();
     try {
         const response = await fetch("main.wasm");
@@ -78,7 +98,9 @@ async function init() {
         const pigoData = await pigoRes.arrayBuffer();
         inicializarDetector(new Uint8Array(pigoData));
         pigoInitialized = true;
+        
         window.addEventListener('keydown', handleInput);
+        setupTouchEvents(); // Ativa o toque no mobile
         animate();
     } catch (e) {
         document.getElementById('status').innerText = "ERRO WASM";

@@ -75,6 +75,10 @@ button:active {
     background: transparent !important;
 }
 
+#canvas-ar {
+    touch-action: none; /* Bloqueia o scroll da página para priorizar o 3D */
+}
+
 /* Esconde por padrão */
 #mobile-only-controls {
     display: none;
