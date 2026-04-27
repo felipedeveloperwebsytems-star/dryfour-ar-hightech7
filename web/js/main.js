@@ -1,45 +1,71 @@
-﻿let scene, camera, renderer, model, video;
+﻿let scene, camera, renderer, model, video, canvas;
 let pigoInitialized = false;
 let currentFacingMode = "user";
+let isSwitchingCamera = false; // Bloqueio para evitar múltiplos cliques
 
 // Funções de Controle Global
 window.move = (axis, val) => { if(model) model.position[axis] += val; };
 window.updateScale = (val) => { if(model) model.scale.multiplyScalar(val); };
 window.rotate = (axis, val) => { if(model) model.rotation[axis] += val; };
 
-// --- CORREÇÃO DE CÂMERA (NotReadableError) ---
+// --- FUNÇÃO DE TROCA DE CÂMERA BLINDADA (NotReadable/AbortError) ---
 window.toggleCamera = async () => {
+    // Se já estiver trocando, ignora o clique para não travar o S21
+    if (isSwitchingCamera) return; 
+    isSwitchingCamera = true;
+
     currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
     const btn = document.getElementById('btn-camera');
-    btn.innerText = (currentFacingMode === "user") ? "BACK" : "FRONT";
+    const statusEl = document.getElementById('status');
     
+    btn.innerText = (currentFacingMode === "user") ? "AGUARDE..." : "AGUARDE...";
+    statusEl.innerText = "REINICIANDO SENSORES...";
+
     // 1. Para tudo e limpa o cache do hardware
     if (video.srcObject) {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
 
-    // 2. Aguarda 300ms para o S21 liberar o sensor fisicamente
-    setTimeout(async () => {
+    // 2. PAUSA DE SEGURANÇA (1000ms): Vital para o S21 liberar o hardware
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // 3. Tenta reiniciar o vídeo
+    try {
         await startVideo();
-        video.style.transform = (currentFacingMode === "user") ? "scaleX(-1)" : "scaleX(1)";
-    }, 300);
+        
+        // Ajuste de espelhamento e texto do botão
+        if (currentFacingMode === "user") {
+            video.style.transform = "scaleX(-1)";
+            btn.innerText = "BACK";
+            statusEl.innerText = "SISTEMA ATIVO (FRONT)";
+        } else {
+            video.style.transform = "scaleX(1)";
+            btn.innerText = "FRONT";
+            statusEl.innerText = "SISTEMA ATIVO (BACK)";
+        }
+    } catch (e) {
+        statusEl.innerText = "ERRO FATAL CÂMERA";
+        console.error(e);
+    } finally {
+        isSwitchingCamera = false; // Libera o botão
+    }
 };
 
 async function startVideo() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: currentFacingMode },
-            audio: false 
-        });
-        video.srcObject = stream;
-        await video.play();
-    } catch (err) {
-        document.getElementById('status').innerText = "ERRO CÂMERA: " + err.name;
-    }
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            width: { ideal: 640 }, 
+            height: { ideal: 480 }, 
+            facingMode: currentFacingMode 
+        },
+        audio: false 
+    });
+    video.srcObject = stream;
+    await video.play();
 }
 
-// --- REINTEGRAÇÃO TOUCH SCREEN (S21) ---
+// --- EVENTOS TOUCH SCREEN (Mantendo o que já funciona) ---
 function setupTouchEvents() {
     let lastTouchX = 0;
     let lastTouchY = 0;
@@ -66,7 +92,13 @@ function setupTouchEvents() {
 
 async function init() {
     video = document.getElementById('webcam');
-    await startVideo();
+    
+    // Início com segurança
+    try {
+        await startVideo();
+    } catch (e) {
+        document.getElementById('status').innerText = "ERRO INICIAL CÂMERA";
+    }
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -100,7 +132,7 @@ async function init() {
         pigoInitialized = true;
         
         window.addEventListener('keydown', handleInput);
-        setupTouchEvents(); // Ativa o toque no mobile
+        setupTouchEvents();
         animate();
     } catch (e) {
         document.getElementById('status').innerText = "ERRO WASM";

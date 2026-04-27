@@ -1,13 +1,16 @@
-﻿body { 
+﻿/* Configuração Base da Página */
+body { 
     margin: 0; 
     background: #000; 
     color: #0f0; 
-    font-family: monospace; 
+    font-family: 'Courier New', Courier, monospace; 
     overflow: hidden;
     width: 100vw;
     height: 100vh;
+    user-select: none; /* Impede seleção de texto ao tocar nos botões */
 }
 
+/* Painel de Status (Canto Superior Esquerdo) */
 #ui { 
     position: absolute; 
     top: 10px; 
@@ -15,12 +18,13 @@
     z-index: 100; 
     border: 1px solid #0f0; 
     padding: 10px; 
-    background: rgba(0, 0, 0, 0.7);
-    pointer-events: none;
+    background: rgba(0, 0, 0, 0.8);
+    pointer-events: none; /* Deixa cliques passarem para o canvas */
     font-size: 12px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
 }
 
-/* Painel de Controles */
+/* Painel de Controles High-Tech (Canto Superior Direito) */
 #controls-container {
     position: absolute;
     top: 10px;
@@ -34,26 +38,58 @@
 .control-group {
     display: flex;
     gap: 5px;
+    justify-content: flex-end;
 }
 
+/* Estilo dos Botões de Interação */
 button {
     background: rgba(0, 255, 0, 0.1);
     border: 1px solid #0f0;
     color: #0f0;
-    padding: 10px;
+    padding: 12px;
     font-family: monospace;
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: bold;
     cursor: pointer;
     border-radius: 4px;
-    min-width: 50px;
-    touch-action: manipulation; /* Melhora resposta no S21 */
+    min-width: 55px;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    touch-action: manipulation; /* Otimiza o clique no S21 */
 }
 
 button:active {
     background: #0f0;
     color: #000;
+    transform: scale(0.95);
 }
 
+/* Estado Desativado (Aparece durante o 'AGUARDE' da troca de câmera) */
+button:disabled {
+    background: rgba(85, 85, 85, 0.3);
+    border-color: #555;
+    color: #777;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Visibilidade dos Controles de Câmera (Somente Mobile) */
+#mobile-only-controls {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    #mobile-only-controls {
+        display: flex;
+    }
+    
+    button {
+        padding: 15px; /* Botões maiores para o dedo no celular */
+        min-width: 65px;
+    }
+}
+
+/* Camada da Webcam (Fundo) */
 #webcam {
     position: absolute;
     top: 0;
@@ -62,9 +98,9 @@ button:active {
     height: 100vh;
     object-fit: cover;
     z-index: 1;
-    transform: scaleX(-1);
 }
 
+/* Camada do 3D (Frente) */
 #canvas-ar {
     position: absolute;
     top: 0;
@@ -73,20 +109,6 @@ button:active {
     height: 100vh;
     z-index: 10;
     background: transparent !important;
-}
-
-#canvas-ar {
-    touch-action: none; /* Bloqueia o scroll da página para priorizar o 3D */
-}
-
-/* Esconde por padrão */
-#mobile-only-controls {
-    display: none;
-}
-
-/* Mostra apenas em dispositivos móveis */
-@media (max-width: 768px) {
-    #mobile-only-controls {
-        display: flex;
-    }
+    /* CRÍTICO: Bloqueia o scroll do sistema para permitir o Touch do 3D */
+    touch-action: none; 
 }
