@@ -29,6 +29,9 @@
         <div class="control-group">
             <button onmousedown="rotate('y', 0.5)" ontouchstart="rotate('y', 0.5)">ROT</button>
         </div>
+        <div class="control-group" id="mobile-only-controls">
+            <button id="btn-camera" onmousedown="toggleCamera()" ontouchstart="toggleCamera()">BACK</button>
+        </div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>

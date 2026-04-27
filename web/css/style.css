@@ -74,3 +74,15 @@ button:active {
     z-index: 10;
     background: transparent !important;
 }
+
+/* Esconde por padrão */
+#mobile-only-controls {
+    display: none;
+}
+
+/* Mostra apenas em dispositivos móveis */
+@media (max-width: 768px) {
+    #mobile-only-controls {
+        display: flex;
+    }
+}
