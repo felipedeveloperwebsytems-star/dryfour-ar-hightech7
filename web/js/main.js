@@ -1,104 +1,102 @@
 ﻿let scene, camera, renderer, model, video, canvas;
 let pigoInitialized = false;
 let currentFacingMode = "user";
-let isSwitchingCamera = false; // Bloqueio para evitar múltiplos cliques
+let isSwitchingCamera = false;
 
-// Funções de Controle Global
+// Funções de Controle Global (Botões)
 window.move = (axis, val) => { if(model) model.position[axis] += val; };
 window.updateScale = (val) => { if(model) model.scale.multiplyScalar(val); };
 window.rotate = (axis, val) => { if(model) model.rotation[axis] += val; };
 
-// --- FUNÇÃO DE TROCA DE CÂMERA BLINDADA (NotReadable/AbortError) ---
+// --- TROCA DE CÂMERA BLINDADA (S21) ---
 window.toggleCamera = async () => {
-    // Se já estiver trocando, ignora o clique para não travar o S21
     if (isSwitchingCamera) return; 
     isSwitchingCamera = true;
-
     currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
     const btn = document.getElementById('btn-camera');
     const statusEl = document.getElementById('status');
-    
-    btn.innerText = (currentFacingMode === "user") ? "AGUARDE..." : "AGUARDE...";
-    statusEl.innerText = "REINICIANDO SENSORES...";
-
-    // 1. Para tudo e limpa o cache do hardware
+    btn.innerText = "AGUARDE...";
     if (video.srcObject) {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
-
-    // 2. PAUSA DE SEGURANÇA (1000ms): Vital para o S21 liberar o hardware
     await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 3. Tenta reiniciar o vídeo
     try {
         await startVideo();
-        
-        // Ajuste de espelhamento e texto do botão
-        if (currentFacingMode === "user") {
-            video.style.transform = "scaleX(-1)";
-            btn.innerText = "BACK";
-            statusEl.innerText = "SISTEMA ATIVO (FRONT)";
-        } else {
-            video.style.transform = "scaleX(1)";
-            btn.innerText = "FRONT";
-            statusEl.innerText = "SISTEMA ATIVO (BACK)";
-        }
+        video.style.transform = (currentFacingMode === "user") ? "scaleX(-1)" : "scaleX(1)";
+        btn.innerText = (currentFacingMode === "user") ? "BACK" : "FRONT";
+        statusEl.innerText = "CÂMERA ALTERNADA";
     } catch (e) {
-        statusEl.innerText = "ERRO FATAL CÂMERA";
-        console.error(e);
+        statusEl.innerText = "ERRO AO ALTERNAR";
     } finally {
-        isSwitchingCamera = false; // Libera o botão
+        isSwitchingCamera = false;
     }
 };
 
 async function startVideo() {
     const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-            width: { ideal: 640 }, 
-            height: { ideal: 480 }, 
-            facingMode: currentFacingMode 
-        },
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: currentFacingMode },
         audio: false 
     });
     video.srcObject = stream;
     await video.play();
 }
 
-// --- EVENTOS TOUCH SCREEN (Mantendo o que já funciona) ---
+// --- RESTAURAÇÃO DAS INTERAÇÕES TOUCH (Mobile Premium) ---
 function setupTouchEvents() {
     let lastTouchX = 0;
     let lastTouchY = 0;
+    let initialPinchDistance = null;
 
     canvas = document.getElementById('canvas-ar');
+
     canvas.addEventListener('touchstart', e => {
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
+        if (e.touches.length === 1) {
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+            // Prepara para o Pinch Zoom (Escala)
+            initialPinchDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+        }
     }, {passive: false});
 
     canvas.addEventListener('touchmove', e => {
         if (!model) return;
-        let deltaX = e.touches[0].clientX - lastTouchX;
-        let deltaY = e.touches[0].clientY - lastTouchY;
+        e.preventDefault(); // Impede o scroll da página
 
-        model.rotation.y += deltaX * 0.01;
-        model.position.y -= deltaY * 0.01;
+        if (e.touches.length === 1) {
+            // Rotação e Movimento Vertical
+            let deltaX = e.touches[0].clientX - lastTouchX;
+            let deltaY = e.touches[0].clientY - lastTouchY;
 
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-        e.preventDefault();
+            model.rotation.y += deltaX * 0.01;
+            model.position.y -= deltaY * 0.01;
+
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+            // Pinch to Zoom (Escala do Objeto)
+            const currentDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+
+            if (initialPinchDistance) {
+                const factor = currentDistance / initialPinchDistance;
+                if (factor > 1) model.scale.multiplyScalar(1.02);
+                else model.scale.multiplyScalar(0.98);
+                initialPinchDistance = currentDistance;
+            }
+        }
     }, {passive: false});
 }
 
 async function init() {
     video = document.getElementById('webcam');
-    
-    // Início com segurança
-    try {
-        await startVideo();
-    } catch (e) {
-        document.getElementById('status').innerText = "ERRO INICIAL CÂMERA";
-    }
+    await startVideo();
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -132,7 +130,7 @@ async function init() {
         pigoInitialized = true;
         
         window.addEventListener('keydown', handleInput);
-        setupTouchEvents();
+        setupTouchEvents(); // Ativa a interação mobile rica
         animate();
     } catch (e) {
         document.getElementById('status').innerText = "ERRO WASM";
