@@ -12,12 +12,13 @@
         <div class="hud-box">
             <span class="brand">DRYFOUR // AR</span>
             <span class="separator">|</span>
+            <span class="status-label">STATUS:</span>
             <span id="status" class="status-value">INICIALIZANDO...</span>
         </div>
     </div>
 
     <div id="search-container">
-        <input type="text" id="search-input" placeholder="BUSCAR PRODUTO..." onkeypress="handleSearchKeyPress(event)">
+        <input type="text" id="search-input" placeholder="PESQUISAR PRODUTO (ex: carteira)..." onkeypress="handleSearchKeyPress(event)">
         <button id="search-button" onclick="performSearch()">
             <i class="fas fa-search"></i>
         </button>
@@ -43,8 +44,8 @@
                 <button class="btn-ar btn-rot-x" onmousedown="rotate('x', -0.2)" ontouchstart="rotate('x', -0.2)">RX-</button>
             </div>
             <div class="control-group">
-                <button class="btn-ar btn-scl" onmousedown="updateScale(1.1)" ontouchstart="updateScale(1.1)">S+</button>
-                <button class="btn-ar btn-scl" onmousedown="updateScale(0.9)" ontouchstart="updateScale(0.9)">S-</button>
+                <button class="btn-ar btn-scl" onmousedown="updateScale(1.1)" ontouchstart="updateScale(1.1)">SCL+</button>
+                <button class="btn-ar btn-scl" onmousedown="updateScale(0.9)" ontouchstart="updateScale(0.9)">SCL-</button>
             </div>
             <div class="control-group">
                 <button class="btn-ar btn-rot-y" onmousedown="rotate('y', 0.5)" ontouchstart="rotate('y', 0.5)">ROT Y</button>
