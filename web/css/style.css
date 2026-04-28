@@ -1,210 +1,70 @@
-﻿/* Configuração Base - Estilo Cyberpunk/Mono */
-body { 
-    margin: 0; 
-    background: #000; 
-    color: #0f0; /* Verde Neon padrão */
-    font-family: 'Courier New', Courier, monospace; /* Fonte High-Tech */
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    user-select: none;
-    text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+﻿body { 
+    margin: 0; background: #000; color: #0f0; 
+    font-family: 'Courier New', Courier, monospace; 
+    overflow: hidden; width: 100vw; height: 100vh; user-select: none;
 }
 
-/* HUD Principal (Informações Superiores) */
 #ui-hud { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%;
-    z-index: 100; 
-    display: flex;
-    justify-content: center;
-    padding-top: 10px;
-    pointer-events: none; /* Não atrapalha o clique */
+    position: absolute; top: 0; left: 0; width: 100%; z-index: 100; 
+    display: flex; justify-content: center; padding-top: 10px; pointer-events: none;
 }
 
 .hud-box {
-    background: rgba(0, 20, 0, 0.6);
-    border: 1px solid #0f0;
-    backdrop-filter: blur(5px); /* Efeito de Vidro */
-    padding: 8px 20px;
-    border-radius: 0 0 15px 15px;
-    font-size: 12px;
-    letter-spacing: 1px;
+    background: rgba(0, 20, 0, 0.6); border: 1px solid #0f0;
+    backdrop-filter: blur(5px); padding: 8px 20px; border-radius: 0 0 15px 15px;
+    font-size: 11px; display: flex; align-items: center; gap: 8px;
     box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 .brand { font-weight: bold; color: #fff; text-shadow: 0 0 5px #fff; }
-.separator { color: #555; }
-.status-label { color: #888; }
-.status-value { color: #0f0; animation: pulse 2s infinite; }
 
-/* Barra de Pesquisa Futurista */
 #search-container {
-    position: absolute;
-    top: 60px; /* Logo abaixo do HUD */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    display: flex;
-    gap: 0;
-    width: 90%;
-    max-width: 400px;
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+    z-index: 1000; display: flex; width: 85%; max-width: 350px;
 }
 
 #search-input {
-    flex-grow: 1;
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid #0f0;
-    border-right: none;
-    color: #0f0;
-    padding: 10px 15px;
-    font-family: monospace;
-    font-size: 12px;
-    border-radius: 20px 0 0 20px;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-#search-input:focus {
-    background: rgba(0, 40, 0, 0.8);
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    flex-grow: 1; background: rgba(0, 0, 0, 0.7); border: 1px solid #0f0;
+    color: #0f0; padding: 10px; font-family: monospace; border-radius: 20px 0 0 20px; outline: none;
 }
 
 #search-button {
-    background: rgba(0, 255, 0, 0.2);
-    border: 1px solid #0f0;
-    color: #0f0;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 0 20px 20px 0;
-    transition: all 0.2s ease;
+    background: rgba(0, 255, 0, 0.2); border: 1px solid #0f0; border-left: none;
+    color: #0f0; padding: 10px 15px; cursor: pointer; border-radius: 0 20px 20px 0;
 }
 
-#search-button:hover { background: rgba(0, 255, 0, 0.4); }
-
-/* Container de Controles - Videogame Style */
 #controls-container {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    display: flex;
-    justify-content: space-between; /* Esquerda e Direita */
-    padding: 0 20px;
-    box-sizing: border-box;
-    pointer-events: none; /* Deixa o fundo livre para touch */
+    position: absolute; bottom: 20px; left: 0; width: 100%; z-index: 1000;
+    display: flex; justify-content: space-between; padding: 0 15px; box-sizing: border-box; pointer-events: none;
 }
 
-.control-cluster {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    pointer-events: auto; /* Reativa cliques nos clusters */
-}
+.control-cluster { display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+.d-pad { align-items: center; }
+.mid-row { display: flex; gap: 25px; }
 
-/* D-Pad (Esquerda) */
-.d-pad {
-    align-items: center;
-}
-
-.mid-row {
-    display: flex;
-    gap: 30px; /* Espaço central do D-Pad */
-}
-
-/* Estilo Base dos Botões (High-Tech Transparente) */
 .btn-ar {
-    background: rgba(0, 40, 0, 0.5); /* Fundo Transparente */
-    border: 1px solid rgba(0, 255, 0, 0.5);
-    color: rgba(0, 255, 0, 0.8);
-    backdrop-filter: blur(3px); /* Vidro leve */
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 50%; /* Botões redondos estilo game */
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-    transition: all 0.1s ease;
-    touch-action: manipulation;
-    box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.1);
+    background: rgba(0, 40, 0, 0.5); border: 1px solid rgba(0, 255, 0, 0.5);
+    color: #0f0; font-family: monospace; font-size: 10px; font-weight: bold;
+    border-radius: 50%; width: 50px; height: 50px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s ease; backdrop-filter: blur(3px);
 }
 
-/* Feedback Visual ao Clicar */
-.btn-ar:active {
-    background: #0f0;
-    color: #000;
-    border-color: #0f0;
-    box-shadow: 0 0 20px #0f0;
-    transform: scale(0.9) translateY(2px);
-    text-shadow: none;
+.btn-ar:active { background: #0f0; color: #000; transform: scale(0.9); }
+
+.btn-rot-x { border-color: #0ff; color: #0ff; }
+.btn-cam { border-color: #ff0; color: #ff0; }
+
+#webcam { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; }
+#canvas-ar { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; touch-action: none; }
+
+/* Ajuste específico para Paisagem (Landscape) */
+@media screen and (orientation: landscape) {
+    #search-container { top: 10px; left: 20%; transform: none; width: 40%; }
+    #ui-hud { justify-content: flex-start; padding-left: 20px; }
+    .hud-box { border-radius: 0 0 10px 10px; }
 }
-
-/* Action Buttons (Direita) */
-.action-buttons {
-    align-items: flex-end;
-}
-
-.control-group {
-    display: flex;
-    gap: 8px;
-}
-
-/* Variações de Cores para Botões Específicos */
-.btn-cam { border-color: #ff0; color: #ff0; text-shadow: 0 0 5px #ff0; } /* Amarelo */
-.btn-cam:active { background: #ff0; color: #000; box-shadow: 0 0 20px #ff0; }
-
-button:disabled {
-    background: rgba(50, 50, 50, 0.5) !important;
-    border-color: #444 !important;
-    color: #666 !important;
-    cursor: not-allowed;
-    opacity: 0.5;
-    text-shadow: none;
-}
-
-/* Responsividade Mobile */
-#mobile-only-controls { display: none; }
 
 @media (max-width: 768px) {
-    #mobile-only-controls { display: flex; }
-    
-    .btn-ar {
-        width: 60px; /* Botões maiores para o dedo */
-        height: 60px;
-        font-size: 14px;
-    }
-    
-    .mid-row { gap: 40px; }
-    
-    #search-container { width: 85%; }
-}
-
-/* Camadas de Fundo */
-#webcam {
-    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-    object-fit: cover; z-index: 1;
-}
-
-#canvas-ar {
-    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-    z-index: 10; background: transparent !important;
-    touch-action: none; 
-}
-
-/* Animação de Pulsar o Status */
-@keyframes pulse {
-    0% { opacity: 1; text-shadow: 0 0 5px #0f0; }
-    50% { opacity: 0.6; text-shadow: 0 0 2px #0f0; }
-    100% { opacity: 1; text-shadow: 0 0 5px #0f0; }
+    .btn-ar { width: 55px; height: 55px; font-size: 12px; }
 }
