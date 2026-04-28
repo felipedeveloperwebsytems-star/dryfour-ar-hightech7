@@ -3,10 +3,88 @@ let pigoInitialized = false;
 let currentFacingMode = "user";
 let isSwitchingCamera = false;
 
+// --- CONFIGURAÇÃO DO BANCO DE DADOS DE PRODUTOS (DryFour Shopping) ---
+const productDatabase = {
+    "bola": { path: 'assets/models/bola.glb', scale: 1.5, yOffset: 0 },
+    "carteira": { path: 'assets/models/carteira.glb', scale: 2.0, yOffset: -0.5 },
+    "estrela": { path: 'assets/models/estrela.glb', scale: 1.2, yOffset: 0.2 },
+    "sino": { path: 'assets/models/sino.glb', scale: 1.8, yOffset: -0.3 }
+};
+let currentProductName = "bola"; // Produto inicial
+
 // Funções de Controle Global (Botões)
 window.move = (axis, val) => { if(model) model.position[axis] += val; };
 window.updateScale = (val) => { if(model) model.scale.multiplyScalar(val); };
 window.rotate = (axis, val) => { if(model) model.rotation[axis] += val; };
+
+// --- SISTEMA DE PESQUISA E TROCA DE MODELO ---
+window.performSearch = () => {
+    const input = document.getElementById('search-input');
+    const searchTerm = input.value.toLowerCase().trim();
+    const statusEl = document.getElementById('status');
+
+    if (productDatabase[searchTerm]) {
+        statusEl.innerText = `CARREGANDO ${searchTerm.toUpperCase()}...`;
+        loadModel(searchTerm);
+        input.value = ""; // Limpa a barra
+        input.blur(); // Tira o foco para esconder o teclado mobile
+    } else {
+        statusEl.innerText = "PRODUTO NÃO ENCONTRADO";
+        input.style.borderColor = "#f00"; // Feedback de erro vermelho
+        setTimeout(() => input.style.borderColor = "#0f0", 1500);
+    }
+};
+
+// Atalho 'Enter' na pesquisa
+window.handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') performSearch();
+};
+
+// Função Genérica de Carregamento de Modelo
+function loadModel(productKey) {
+    const product = productDatabase[productKey];
+    if (!product) return;
+
+    const statusEl = document.getElementById('status');
+    const loader = new THREE.GLTFLoader();
+
+    // 1. Remove o modelo anterior da cena para poupar memória (32MB HD Graphics)
+    if (model) {
+        scene.remove(model);
+        // Idealmente, libertar geometria e materiais aqui para otimização agressiva
+    }
+
+    // 2. Carrega o novo modelo
+    loader.load(product.path, function (gltf) {
+        model = gltf.scene;
+        
+        // Aplica materiais otimizados (brilho DryFour)
+        model.traverse(child => { 
+            if (child.isMesh) { 
+                child.material.metalness = 0.7; 
+                child.material.roughness = 0.2; 
+                child.material.envMapIntesity = 1.0;
+            } 
+        });
+
+        // Aplica configurações específicas do banco de dados
+        model.scale.set(product.scale, product.scale, product.scale);
+        model.position.set(0, product.yOffset, 0); // Ajusta altura inicial
+        
+        scene.add(model);
+        currentProductName = productKey;
+        statusEl.innerText = `${productKey.toUpperCase()} CARREGADO // ATIVO`;
+        console.log(`Sucesso: ${productKey} carregado.`);
+    }, undefined, function (error) {
+        console.error("Erro no carregamento:", error);
+        statusEl.innerText = "ERRO NO MODELO 3D";
+        // Fallback para cubo
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        model = new THREE.Mesh(geometry, new THREE.MeshNormalMaterial());
+        scene.add(model);
+    });
+}
+
 
 // --- TROCA DE CÂMERA BLINDADA (S21) ---
 window.toggleCamera = async () => {
@@ -15,20 +93,27 @@ window.toggleCamera = async () => {
     currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
     const btn = document.getElementById('btn-camera');
     const statusEl = document.getElementById('status');
-    btn.innerText = "AGUARDE...";
+    
+    btn.disabled = true;
+    btn.innerText = "WAIT...";
+    statusEl.innerText = "REINICIANDO SENSORES...";
+
     if (video.srcObject) {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
+
     await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
         await startVideo();
         video.style.transform = (currentFacingMode === "user") ? "scaleX(-1)" : "scaleX(1)";
         btn.innerText = (currentFacingMode === "user") ? "BACK" : "FRONT";
-        statusEl.innerText = "CÂMERA ALTERNADA";
+        statusEl.innerText = "CÂMERA ATIVA";
     } catch (e) {
-        statusEl.innerText = "ERRO AO ALTERNAR";
+        statusEl.innerText = "ERRO FATAL CÂMERA";
     } finally {
+        btn.disabled = false;
         isSwitchingCamera = false;
     }
 };
@@ -42,7 +127,7 @@ async function startVideo() {
     await video.play();
 }
 
-// --- RESTAURAÇÃO DAS INTERAÇÕES TOUCH (Mobile Premium) ---
+// --- INTERAÇÕES TOUCH (Mobile Premium) ---
 function setupTouchEvents() {
     let lastTouchX = 0;
     let lastTouchY = 0;
@@ -55,7 +140,6 @@ function setupTouchEvents() {
             lastTouchX = e.touches[0].clientX;
             lastTouchY = e.touches[0].clientY;
         } else if (e.touches.length === 2) {
-            // Prepara para o Pinch Zoom (Escala)
             initialPinchDistance = Math.hypot(
                 e.touches[0].pageX - e.touches[1].pageX,
                 e.touches[0].pageY - e.touches[1].pageY
@@ -65,25 +149,24 @@ function setupTouchEvents() {
 
     canvas.addEventListener('touchmove', e => {
         if (!model) return;
-        e.preventDefault(); // Impede o scroll da página
+        
+        // Se o toque começou na barra de pesquisa, não move o 3D
+        if (e.target.id === 'search-input') return;
+
+        e.preventDefault(); 
 
         if (e.touches.length === 1) {
-            // Rotação e Movimento Vertical
             let deltaX = e.touches[0].clientX - lastTouchX;
             let deltaY = e.touches[0].clientY - lastTouchY;
-
             model.rotation.y += deltaX * 0.01;
             model.position.y -= deltaY * 0.01;
-
             lastTouchX = e.touches[0].clientX;
             lastTouchY = e.touches[0].clientY;
         } else if (e.touches.length === 2) {
-            // Pinch to Zoom (Escala do Objeto)
             const currentDistance = Math.hypot(
                 e.touches[0].pageX - e.touches[1].pageX,
                 e.touches[0].pageY - e.touches[1].pageY
             );
-
             if (initialPinchDistance) {
                 const factor = currentDistance / initialPinchDistance;
                 if (factor > 1) model.scale.multiplyScalar(1.02);
@@ -94,7 +177,9 @@ function setupTouchEvents() {
     }, {passive: false});
 }
 
+// --- INICIALIZAÇÃO PRINCIPAL ---
 async function init() {
+    const statusEl = document.getElementById('status');
     video = document.getElementById('webcam');
     await startVideo();
 
@@ -111,13 +196,8 @@ async function init() {
 
     camera.position.z = 5;
 
-    new THREE.GLTFLoader().load('assets/models/bola.glb', gltf => {
-        model = gltf.scene;
-        model.traverse(child => { if (child.isMesh) { child.material.metalness = 0.7; child.material.roughness = 0.2; } });
-        model.scale.set(1.5, 1.5, 1.5);
-        scene.add(model);
-        document.getElementById('status').innerText = "BOLA CARREGADA";
-    });
+    // Carrega o modelo inicial (bola) usando a nova função genérica
+    loadModel(currentProductName);
 
     const go = new Go();
     try {
@@ -130,16 +210,19 @@ async function init() {
         pigoInitialized = true;
         
         window.addEventListener('keydown', handleInput);
-        setupTouchEvents(); // Ativa a interação mobile rica
+        setupTouchEvents();
         animate();
     } catch (e) {
-        document.getElementById('status').innerText = "ERRO WASM";
+        statusEl.innerText = "ERRO WASM";
     }
 }
 
 function handleInput(e) {
     if (!model) return;
     const s = 0.5;
+    // Impede que comandos de teclado funcionem se o usuário estiver digitando na pesquisa
+    if (document.activeElement.id === 'search-input') return;
+
     switch(e.key) {
         case 'w': case 'ArrowUp': model.position.z += s; break;
         case 's': case 'ArrowDown': model.position.z -= s; break;
@@ -166,7 +249,8 @@ function animate() {
             model.position.y = -((res.y / 480) * 2 - 1) * 3;
         }
     }
-    if (model) model.rotation.y += 0.01;
+    // Rotação automática suave (Estilo vitrine)
+    if (model) model.rotation.y += 0.005;
     renderer.render(scene, camera);
 }
 window.onload = init;
